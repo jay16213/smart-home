@@ -1,0 +1,20 @@
+<% layout('layout') %>
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-10">
+      <div id="camera">
+      </div>
+      <form id="led" method="post" action="/">
+        <button class="btn btn-primary" type="submit">LED</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  $('#led').on('submit', function(e) {
+    e.preventDefault();
+    $.post('/led');
+  });
+</script>
