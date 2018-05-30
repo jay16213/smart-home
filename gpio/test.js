@@ -13,6 +13,7 @@ var led = function() {
     }
 
     rpio.close(LED_R);
+    return;
 }
 
 module.exports = led;

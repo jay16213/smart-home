@@ -8,6 +8,14 @@
       <form id="led" method="post" action="/led">
         <button class="btn btn-primary" type="submit">LED</button>
       </form>
+
+      <form id="temp" method="post" action="/temp">
+        <button class="btn btn-primary" type="submit">temp</button>
+      </form>
+
+      <form id="light" method="post" action="/light">
+        <button class="btn btn-primary" type="submit">light</button>
+      </form>
     </div>
   </div>
 </div>
@@ -16,5 +24,15 @@
   $('#led').on('submit', function(e) {
     e.preventDefault();
     $.post('/led');
+  });
+
+  $('#temp').on('submit', function(e) {
+    e.preventDefault();
+    $.post('/temp');
+  });
+
+  $('#light').on('submit', function(e) {
+    e.preventDefault();
+    $.post('/light');
   });
 </script>
