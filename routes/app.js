@@ -1,7 +1,9 @@
-var led = require('../gpio/test');
-var irSensor = require('../gpio/ir');
-var readTemperature = require('../gpio/temp');
-var readLightSensor = require('../gpio/light');
+const led = require('../gpio/test');
+const irSensor = require('../gpio/ir');
+const readTemperature = require('../gpio/temp');
+const readLightSensor = require('../gpio/light');
+const nodemailer = require('nodemailer');
+const secret = require('../secret/mail');
 
 module.exports = (app) => {
     app.get('/', (req, res, next) => {
@@ -23,5 +25,27 @@ module.exports = (app) => {
 
     app.post('/light', (req, res) => {
         let light = readLightSensor();
+    });
+
+    app.post('/warning', (req, res) => {
+        let transporter = nodemailer.createTransport({
+            service: 'Gmail',
+            auth: {
+                user: secret.user,
+                pass: secret.password
+            }
+        });
+
+        let mailOptions = {
+            to: `${secret.user}@gmail.com`,
+            from: `SmartHome <${secret.user}>`,
+            subject: 'Your Home Has Danger',
+            text: 'A stranger is in your house now!\n'
+        }
+
+        transporter.sendMail(mailOptions, (err, res) => {
+            if(err) throw err;
+            console.log("send mail!");
+        });
     });
 }

@@ -5,34 +5,29 @@
     <div class="col-10">
       <div id="camera">
       </div>
-      <form id="led" method="post" action="/led">
-        <button class="btn btn-primary" type="submit">LED</button>
-      </form>
 
-      <form id="temp" method="post" action="/temp">
-        <button class="btn btn-primary" type="submit">temp</button>
-      </form>
-
-      <form id="light" method="post" action="/light">
-        <button class="btn btn-primary" type="submit">light</button>
-      </form>
+      <button id="led" class="btn btn-primary">LED</button>
+      <button id="temp" class="btn btn-primary">temp</button>
+      <button id="light" class="btn btn-primary">light</button>
+      <button id="mailer" class="btn btn-primary">send mail</button>
     </div>
   </div>
 </div>
 
 <script>
   $('#led').on('submit', function(e) {
-    e.preventDefault();
     $.post('/led');
   });
 
   $('#temp').on('submit', function(e) {
-    e.preventDefault();
     $.post('/temp');
   });
 
   $('#light').on('submit', function(e) {
-    e.preventDefault();
     $.post('/light');
+  });
+
+  $('#mailer').on('click', (e) => {
+    $.post('/warning');
   });
 </script>
