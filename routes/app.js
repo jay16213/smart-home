@@ -7,10 +7,9 @@ const secret = require('../secret/mail');
 
 module.exports = (app) => {
     app.get('/', (req, res, next) => {
-        res.render('index');
-
         // read ir sensor every 500 ms
         setInterval(irSensor, 500);
+        res.render('index');
     });
 
     app.post('/led', (req, res) => {
@@ -45,7 +44,9 @@ module.exports = (app) => {
 
         transporter.sendMail(mailOptions, (err, res) => {
             if(err) throw err;
-            console.log("send mail!");
+            console.log(`${new Date().toString()} send mail`);
         });
+
+        res.redirect('/');
     });
 }

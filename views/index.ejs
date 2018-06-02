@@ -15,19 +15,44 @@
 </div>
 
 <script>
-  $('#led').on('submit', function(e) {
-    $.post('/led');
+  $('#led').on('click', function(e) {
+    $.ajax({
+      url: '/led',
+      type: 'POST',
+      success: () => {
+        console.log('post led success');
+      }
+    });
   });
 
-  $('#temp').on('submit', function(e) {
-    $.post('/temp');
+  $('#temp').on('click', function(e) {
+    $.ajax({
+      url: '/temp',
+      type: 'POST',
+      success: () => {
+        console.log('post /temp success');
+      }
+    });
   });
 
-  $('#light').on('submit', function(e) {
-    $.post('/light');
+  $('#light').on('click', function(e) {
+    $.ajax({
+      url: '/light',
+      type: 'POST',
+      success: () => {
+        console.log('post /light success');
+      }
+    });
   });
 
   $('#mailer').on('click', (e) => {
-    $.post('/warning');
+    $.ajax({
+      url: '/warning',
+      type: 'POST',
+      success: () => {
+        console.log('send email request success');
+      }
+    });
+
   });
 </script>
