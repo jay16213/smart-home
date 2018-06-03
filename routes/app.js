@@ -4,12 +4,15 @@ const readTemperature = require('../gpio/temp');
 const readLightSensor = require('../gpio/light');
 const nodemailer = require('nodemailer');
 const secret = require('../secret/mail');
+const getIP = require('../getip');
 
 module.exports = (app) => {
     app.get('/', (req, res, next) => {
         // read ir sensor every 500 ms
         setInterval(irSensor, 500);
-        res.render('index');
+        let ip = getIP();
+        console.log(`server ip: ${ip}`);
+        res.render('index', {ip: ip});
     });
 
     app.post('/led', (req, res) => {

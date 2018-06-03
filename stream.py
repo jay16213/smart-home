@@ -5,21 +5,76 @@ import logging
 import socketserver
 from http import server
 import numpy as np
+import os
+import yaml
+
+cascadePath = "face_recognization/Cascades/haarcascade_frontalface_default.xml"
+namePath = "face_recognization/trainer/name.yml"
+faceCascade = cv2.CascadeClassifier(cascadePath)
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+recognizer.read('face_recognization/trainer/trainer.yml')
+
+font = cv2.FONT_HERSHEY_SIMPLEX
+
 
 class Stream():
     def __init__(self):
+        # open camera
         self.cam = cv2.VideoCapture(0)
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.cam.set(cv2.CAP_PROP_FPS, 24)
+
+        # Define min window size to be recognized as a face
+        self.minW = 0.1 * self.cam.get(cv2.CAP_PROP_FRAME_WIDTH)
+        self.minH = 0.1 * self.cam.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+        # load valid person's name
+        with open(namePath, 'r') as stream:
+            try:
+                self.names = yaml.load(stream)
+            except yaml.YAMLError as e:
+                print(e)
 
     def release(self):
         self.cam.release()
 
     def get_frame(self):
         rval, image = self.cam.read()
+        image = cv2.flip(image, -1) # Flip vertically
         ret, jpeg = cv2.imencode('.jpg', image)
         return jpeg.tostring()
+
+    def recognize(self):
+        rval, image = self.cam.read()
+        image = cv2.flip(image, -1) # Flip vertically
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+
+        faces = faceCascade.detectMultiScale(
+            gray,
+            scaleFactor = 1.2,
+            minNeighbors = 5,
+            minSize = (int(self.minW), int(self.minH)),
+        )
+
+        for(x,y,w,h) in faces:
+            cv2.rectangle(image, (x,y), (x+w,y+h), (0,255,0), 2)
+            id, confidence = recognizer.predict(gray[y:y+h,x:x+w])
+
+            # Check if confidence is less them 100 ==> "0" is perfect match
+            if (confidence <= 75):
+                id = self.names[id]
+                confidence = "  {0}%".format(round(100 - confidence))
+            else:
+                id = "unknown"
+                confidence = "  {0}%".format(round(confidence))
+
+            cv2.putText(image, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
+            cv2.putText(image, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
+
+        ret, jpeg = cv2.imencode('.jpg', image)
+        return jpeg.tostring()
+
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -32,7 +87,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while True:
-                    frame = output.get_frame()
+                    frame = output.recognize()
 
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
