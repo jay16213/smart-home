@@ -7,7 +7,10 @@ from http import server
 import numpy as np
 import os
 import yaml
+import requests
+import json
 
+server_url = 'http://192.168.137.172:8080'
 cascadePath = "face_recognization/Cascades/haarcascade_frontalface_default.xml"
 namePath = "face_recognization/trainer/name.yml"
 faceCascade = cv2.CascadeClassifier(cascadePath)
@@ -16,6 +19,9 @@ recognizer.read('face_recognization/trainer/trainer.yml')
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+VALID_FACE = 1
+NO_FACE = 0
+INVALID_FACE = -1
 
 class Stream():
     def __init__(self):
@@ -46,6 +52,7 @@ class Stream():
         return jpeg.tostring()
 
     def recognize(self):
+        status = NO_FACE
         rval, image = self.cam.read()
         image = cv2.flip(image, -1) # Flip vertically
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
@@ -64,17 +71,18 @@ class Stream():
             # Check if confidence is less them 100 ==> "0" is perfect match
             if (confidence <= 75):
                 id = self.names[id]
+                status = VALID_FACE
                 confidence = "  {0}%".format(round(100 - confidence))
             else:
                 id = "unknown"
+                status = INVALID_FACE
                 confidence = "  {0}%".format(round(confidence))
 
             cv2.putText(image, str(id), (x+5,y-5), font, 1, (255,255,255), 2)
             cv2.putText(image, str(confidence), (x+5,y+h-5), font, 1, (255,255,0), 1)
 
         ret, jpeg = cv2.imencode('.jpg', image)
-        return jpeg.tostring()
-
+        return status, jpeg.tostring()
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -87,7 +95,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while True:
-                    frame = output.recognize()
+                    result, frame = output.recognize()
 
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
@@ -95,6 +103,9 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(frame)
                     self.wfile.write(b'\r\n')
+
+                    # send recognization result to server
+                    requests.post(server_url + '/face_recognize', json = {"result": result})
             except Exception as e:
                 logging.warning(
                     'Removed streaming client %s: %s',

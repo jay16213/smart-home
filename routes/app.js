@@ -2,11 +2,18 @@ const led = require('../gpio/test');
 const irSensor = require('../gpio/ir');
 const readTemperature = require('../gpio/temp');
 const readLightSensor = require('../gpio/light');
-const nodemailer = require('nodemailer');
-const secret = require('../secret/mail');
-const getIP = require('../getip');
+const sendMail = require('../utils/sendMail');
+const getIP = require('../utils/getip');
+const moment= require('moment');
+
+const VALID_FACE = 1;
+const NO_FACE = 0;
+const INVALID_FACE = -1;
 
 module.exports = (app) => {
+    let invalidCnt = 0;
+    let lastSendTime = 0;
+
     app.get('/', (req, res, next) => {
         // read ir sensor every 500 ms
         setInterval(irSensor, 500);
@@ -18,38 +25,45 @@ module.exports = (app) => {
     app.post('/led', (req, res) => {
         console.log("click led");
         led();
+        res.end('success');
     });
 
     app.post('/temp', (req, res) => {
         console.log("read temp");
         readTemperature();
+        res.end('success');
     });
 
     app.post('/light', (req, res) => {
         let light = readLightSensor();
     });
 
-    app.post('/warning', (req, res) => {
-        let transporter = nodemailer.createTransport({
-            service: 'Gmail',
-            auth: {
-                user: secret.user,
-                pass: secret.password
-            }
-        });
+    app.post('/face_recognize', (req, res) => {
+        let result = req.body.result;
 
-        let mailOptions = {
-            to: `${secret.user}@gmail.com`,
-            from: `SmartHome <${secret.user}>`,
-            subject: 'Your Home Has Danger',
-            text: 'A stranger is in your house now!\n'
+        if(result == VALID_FACE)
+            invalidCnt = 0;
+
+        if(result == INVALID_FACE)
+            invalidCnt++;
+
+        if(invalidCnt >= 5)
+        {
+            let time = moment();
+            console.log(`[${time.format('YYYY-MM-DD HH:mm:ss')}] detect stranger`);
+
+            // to prevent sending too many mails, send email every 30 minutes
+            if(lastSendTime == 0 || time.diff(lastSendTime, 'seconds') >= 1800)
+                lastSendTime = sendMail();
+
+            invalidCnt = 0;
         }
 
-        transporter.sendMail(mailOptions, (err, res) => {
-            if(err) throw err;
-            console.log(`${new Date().toString()} send mail`);
-        });
+        res.end('success');
+    });
 
-        res.redirect('/');
+    app.post('/warning', (req, res) => {
+        sendMail();
+        res.end('success');
     });
 }

@@ -5,6 +5,7 @@ const engine = require('ejs-mate');
 var app = express();
 
 app.use(express.static('public'));
+app.use(express.json());
 app.engine('ejs', engine);
 app.set('view engine', 'ejs');
 
