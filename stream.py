@@ -10,7 +10,7 @@ import yaml
 import requests
 import json
 
-server_url = 'http://192.168.137.172:8080'
+server_url = 'http://0.0.0.0:8080'
 cascadePath1 = "face_recognization/Cascades/lbpcascade_frontalface_improved.xml"
 cascadePath2 = "face_recognization/Cascades/haarcascade_profileface.xml"
 namePath = "face_recognization/trainer/name.yml"
@@ -40,8 +40,8 @@ class Stream():
     def __init__(self):
         # open camera
         self.cam = cv2.VideoCapture(0)
-        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cam.set(cv2.CAP_PROP_FPS, 24)
 
         # Define min window size to be recognized as a face
@@ -76,8 +76,8 @@ class Stream():
                 cv2.rectangle(image, (x1, y1), (x1 + w1, y1 + h1), (0,0,255), 2)
             else:
                 cv2.rectangle(image, (x1, y1), (x1 + w1, y1 + h1), (255,0,0), 2)
-            cv2.putText(image, str(nameIdFront), (x1 + 5,y1 - 5), font, 1, (255,255,255), 2)
-            cv2.putText(image, str(confidenceFront), (x1 + 5,y1 + h1-5), font, 1, (255,255,0), 1)
+            cv2.putText(image, str(nameIdFront), (x1 + 5, y1 - 5), font, 1, (255,255,255), 2)
+            cv2.putText(image, str(confidenceFront), (x1 + 5, y1 + h1-5), font, 1, (255,255,0), 1)
 
         statusProfile, (x2, y2, w2, h2), nameIdProfile, confidenceProfile = self._recognizeProfile(image, gray)
         if(statusProfile != NO_FACE):
@@ -197,7 +197,9 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
     daemon_threads = True
 
 if __name__ == '__main__':
+    print("[STREAM INFO] prepare camera")
     output = Stream()
+    print("[STREAM INFO] start streaming")
     try:
         address = ('', 8160)
         server = StreamingServer(address, StreamingHandler)

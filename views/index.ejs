@@ -3,31 +3,22 @@
 <div class="container">
   <div class="row justify-content-center">
     <div class="col-10">
-      <img src="http://<%= ip %>:8160" class="img-fluid mx-auto d-block" width="1280" height="720"/>
+      <img src="http://<%= ip %>:8160" class="img-fluid mx-auto d-block" width="640" height="480"/>
     </div>
   </div>
 
   <div class="row justify-content-center">
     <div class="col-10">
-      <button id="led" class="btn btn-primary">LED</button>
       <button id="temp" class="btn btn-primary">temp</button>
-      <button id="light" class="btn btn-primary">light</button>
+      <button id="open-light" class="btn btn-primary">open light</button>
+      <button id="close-light" class="btn btn-primary">close light</button>
       <button id="mailer" class="btn btn-primary">send mail</button>
+      <button id="buzzer" class="btn btn-primary">beep</button>
     </div>
   </div>
 </div>
 
 <script>
-  $('#led').on('click', function(e) {
-    $.ajax({
-      url: '/led',
-      type: 'POST',
-      success: () => {
-        console.log('post led success');
-      }
-    });
-  });
-
   $('#temp').on('click', function(e) {
     $.ajax({
       url: '/temp',
@@ -38,12 +29,22 @@
     });
   });
 
-  $('#light').on('click', function(e) {
+  $('#open-light').on('click', function(e) {
     $.ajax({
-      url: '/light',
+      url: '/open/light',
       type: 'POST',
       success: () => {
-        console.log('post /light success');
+        console.log('post /open/light success');
+      }
+    });
+  });
+
+  $('#close-light').on('click', function(e) {
+    $.ajax({
+      url: '/close/light',
+      type: 'POST',
+      success: () => {
+        console.log('post /close/light success');
       }
     });
   });
@@ -56,6 +57,15 @@
         console.log('send email request success');
       }
     });
+  });
 
+  $('#buzzer').on('click', (e) => {
+    $.ajax({
+      url: '/buzzer',
+      type: 'POST',
+      success: () => {
+        console.log('buzzer request success');
+      }
+    });
   });
 </script>

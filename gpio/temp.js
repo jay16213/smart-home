@@ -1,6 +1,5 @@
 const sensor = require('node-dht-sensor');
-
-const DHT11_PGIO = 4;
+const DHT11_PGIO = require('./pin').DHT11;
 
 var readTemperature = () => {
     sensor.read(11, DHT11_PGIO, function(err, temperature, humidity) {

@@ -1,5 +1,7 @@
 .vscode/*
 secret/*
+**/dataset*/
+.vagrant/*
 
 # Logs
 logs

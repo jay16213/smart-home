@@ -1,10 +1,11 @@
-const led = require('../gpio/test');
 const irSensor = require('../gpio/ir');
 const readTemperature = require('../gpio/temp');
-const readLightSensor = require('../gpio/light');
+const buzzer = require('../gpio/buzzer');
 const sendMail = require('../utils/sendMail');
 const getIP = require('../utils/getip');
 const moment= require('moment');
+const rpio = require('rpio');
+const pin = require('../gpio/pin');
 
 const VALID_FACE = 1;
 const NO_FACE = 0;
@@ -22,27 +23,35 @@ module.exports = (app) => {
         res.render('index', {ip: ip});
     });
 
-    app.post('/led', (req, res) => {
-        console.log("click led");
-        led();
-        res.end('success');
-    });
-
     app.post('/temp', (req, res) => {
         console.log("read temp");
         readTemperature();
         res.end('success');
     });
 
-    app.post('/light', (req, res) => {
-        let light = readLightSensor();
+    app.post('/open/light', (req, res) => {
+        rpio.write(pin.LIGHT, rpio.HIGH);
+        res.end('success');
+    });
+
+    app.post('/close/light', (req, res) => {
+        rpio.write(pin.LIGHT, rpio.LOW);
+        res.end('success');
+    });
+
+    app.post('/buzzer', (req, res) => {
+        buzzer();
+        res.end('success');
     });
 
     app.post('/face_recognize', (req, res) => {
         let result = req.body.result;
 
         if(result == VALID_FACE)
+        {
+            rpio.write(pin.LIGHT, rpio.HIGH);
             invalidCnt = 0;
+        }
 
         if(result == INVALID_FACE)
             invalidCnt++;

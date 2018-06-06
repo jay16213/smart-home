@@ -1,5 +1,5 @@
 const rpio = require('rpio');
-const IR_PIN = 22;
+const IR_PIN = require('./pin').IR;
 
 var irSensor = () => {
     rpio.open(IR_PIN, rpio.INPUT);
