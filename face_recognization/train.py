@@ -1,56 +1,64 @@
 import cv2
 import numpy as np
-from PIL import Image
 import os
+import math
 
 # Path for face image database
-path = 'dataset'
+dataPath = 'dataset'
 
+# front_face_detector = cv2.CascadeClassifier('Cascades/lbpcascade_frontalface_improved.xml')
 front_recognizer = cv2.face.LBPHFaceRecognizer_create()
-profile_recognizer = cv2.face.LBPHFaceRecognizer_create()
-front_face_detector = cv2.CascadeClassifier('Cascades/lbpcascade_frontalface_improved.xml')
-profile_face_detector = cv2.CascadeClassifier('Cascades/haarcascade_profileface.xml')
 
 # function to get the images and label data
-def getImagesAndLabels(path):
-    imagePaths = [os.path.join(path,f) for f in os.listdir(path)]
-    front_faceSamples = []
-    profile_faceSamples = []
-    front_ids = []
-    profile_ids = []
-    for imagePath in imagePaths:
-        PIL_img = Image.open(imagePath).convert('L') # convert it to grayscale
-        img_numpy = np.array(PIL_img,'uint8')
+def getImagesAndLabels(dataPath):
+    imageDirs = [os.path.join(dataPath, f) for f in os.listdir(dataPath)]
+    total_samples = []
 
-        id = int(os.path.split(imagePath)[-1].split(".")[1])
+    for imageDir in imageDirs:
+        imagePaths = [os.path.join(imageDir, f) for f in os.listdir(imageDir)]
+        face_id = int(imageDir.split('/')[1])
 
-        frontfaces = front_face_detector.detectMultiScale(img_numpy)
-        profilefaces = profile_face_detector.detectMultiScale(img_numpy)
+        for imagePath in imagePaths:
+            img = cv2.imread(imagePath)
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            total_samples.append((gray, face_id))
 
-        for (x,y,w,h) in frontfaces:
-            front_faceSamples.append(img_numpy[y:y+h,x:x+w])
-            front_ids.append(id)
+    print(' [INFO] load total {} images'.format(len(total_samples)))
+    return total_samples
 
-        for (x,y,w,h) in profilefaces:
-            profile_faceSamples.append(img_numpy[y:y+h,x:x+w])
-            profile_ids.append(id)
+def getTrainingSamples(samples):
+    n_trainings = math.floor(len(samples) * 0.8)
+    np.random.shuffle(samples)
+    training_samples = []
+    ids = []
+    for i in range(n_trainings):
+        training_samples.append(samples[i][0])
+        ids.append(samples[i][1])
 
-    return front_faceSamples, front_ids, profile_faceSamples, profile_ids
+    return training_samples, ids
+
+def test(samples):
+    total_confidence = 0
+    right = 0
+    total = len(samples)
+    for sample, _id in samples:
+        id, confidence = front_recognizer.predict(sample)
+        total_confidence += confidence
+        right += (id == _id)
+
+    print("train: {}, {}".format(float(right) / total, float(total_confidence) / total))
 
 print ("\n [INFO] Loading images and labels. It will take a few seconds. Wait ...")
-ffaces, fids, pfaces, pids = getImagesAndLabels(path)
+total_samples = getImagesAndLabels(dataPath)
+training_samples, fids = getTrainingSamples(total_samples)
 
-print ("[STEP 1] Training front faces. It will take a few seconds. Wait ...")
-front_recognizer.train(ffaces, np.array(fids))
-
-print ("[STEP 2] Training profile faces. It will take a few seconds. Wait ...")
-profile_recognizer.train(pfaces, np.array(pids))
+print (" [INFO] Training front faces using {} images".format(len(training_samples)))
+front_recognizer.train(training_samples, np.array(fids))
 
 # Save the model into trainer/trainer.yml
-print ("[INFO] Finished training. Output the model")
-front_recognizer.write('trainer/fronttrainer.yml') # recognizer.save() worked on Mac, but not on Pi
-profile_recognizer.write('trainer/profiletrainer.yml') # recognizer.save() worked on Mac, but not on Pi
+print (" [INFO] Finished training. Output the model")
+front_recognizer.write('trainer/trainer100.yml') # recognizer.save() worked on Mac, but not on Pi
 
 # Print the numer of faces trained and end program
-ids = np.unique(fids.append(pids))
-print("[INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
+print(" [INFO] {0} faces trained. Test model".format(len(np.unique(fids))))
+test(total_samples)

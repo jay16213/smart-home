@@ -11,15 +11,15 @@ import requests
 import json
 
 server_url = 'http://0.0.0.0:8080'
-cascadePath1 = "face_recognization/Cascades/lbpcascade_frontalface_improved.xml"
-cascadePath2 = "face_recognization/Cascades/haarcascade_profileface.xml"
+cascadePath1 = "face_recognization/Cascades/haarcascade_frontalface_default.xml"
+# cascadePath2 = "face_recognization/Cascades/haarcascade_profileface.xml"
 namePath = "face_recognization/trainer/name.yml"
 faceCascade1 = cv2.CascadeClassifier(cascadePath1)
-faceCascade2 = cv2.CascadeClassifier(cascadePath2)
+# faceCascade2 = cv2.CascadeClassifier(cascadePath2)
 recognizer1 = cv2.face.LBPHFaceRecognizer_create()
-recognizer2 = cv2.face.LBPHFaceRecognizer_create()
-recognizer1.read('face_recognization/trainer/fronttrainer.yml')
-recognizer2.read('face_recognization/trainer/profiletrainer.yml')
+# recognizer2 = cv2.face.LBPHFaceRecognizer_create()
+recognizer1.read('face_recognization/trainer/trainer100.yml')
+# recognizer2.read('face_recognization/trainer/profiletrainer.yml')
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -70,96 +70,30 @@ class Stream():
         image = cv2.flip(image, -1) # Flip vertically
         gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
 
-        statusFront, (x1, y1, w1, h1), nameIdFront, confidenceFront = self._recognizeFront(image, gray)
-        if(statusFront != NO_FACE):
-            if(statusFront == INVALID_FACE):
-                cv2.rectangle(image, (x1, y1), (x1 + w1, y1 + h1), (0,0,255), 2)
-            else:
-                cv2.rectangle(image, (x1, y1), (x1 + w1, y1 + h1), (255,0,0), 2)
-            cv2.putText(image, str(nameIdFront), (x1 + 5, y1 - 5), font, 1, (255,255,255), 2)
-            cv2.putText(image, str(confidenceFront), (x1 + 5, y1 + h1-5), font, 1, (255,255,0), 1)
-
-        statusProfile, (x2, y2, w2, h2), nameIdProfile, confidenceProfile = self._recognizeProfile(image, gray)
-        if(statusProfile != NO_FACE):
-            if(statusProfile == INVALID_FACE):
-                cv2.rectangle(image, (x2, y2), (x2 + w2, y2 + h2), (0,0,255), 2)
-            else:
-                cv2.rectangle(image, (x2, y2), (x2 + w2, y2 + h2), (0,255,0), 2)
-            cv2.putText(image, str(nameIdProfile), (x2 + 5,y2 - 5), font, 1, (255,255,255), 2)
-            cv2.putText(image, str(confidenceProfile), (x2 + 5,y2 + h2 - 5), font, 1, (255,255,0), 1)
-
-        ret, jpeg = cv2.imencode('.jpg', image)
-        if(statusFront == INVALID_FACE or statusProfile == INVALID_FACE):
-            if(not intersection((x1, y1, w1, h1), (x2, y2, w2, h2))):
-                status = INVALID_FACE
-        elif(statusFront == NO_FACE and statusProfile == NO_FACE):
-            status = NO_FACE
-        else:
-            status = VALID_FACE
-
-        return status, jpeg.tostring()
-
-    def _recognizeFront(self, image, gray):
-        status = NO_FACE
-        nameId = ""
-        confidence = -1
         faces = faceCascade1.detectMultiScale(
             gray,
-            scaleFactor = 1.2,
-            minNeighbors = 5,
-            minSize = (int(self.minW), int(self.minH)),
+            scaleFactor = 1.3,
+            minNeighbors = 5
         )
 
-        xx = yy = ww = hh = -1
         for (x, y, w, h) in faces:
-            xx = x
-            yy = y
-            ww = w
-            hh = h
-            id, _confidence = recognizer1.predict(gray[y:y+h,x:x+w])
-            confidence = _confidence
+            id, confidence = recognizer1.predict(gray[y:y+h,x:x+w])
+
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence <= 75):
+            if (confidence <= 100):
                 nameId = self.names[id]
                 status = VALID_FACE
-                # confidence = "  {0}%".format(round(100 - confidence))
+                cv2.rectangle(image, (x, y), (x + w, y + h), (255,0,0), 2)
             else:
                 nameId = "unknown"
                 status = INVALID_FACE
-                # confidence = "  {0}%".format(round(confidence))
+                cv2.rectangle(image, (x, y), (x + w, y + h), (0,0,255), 2)
 
-        return status, (xx, yy, ww, hh), nameId, confidence
+            cv2.putText(image, str(nameId), (x + 5, y - 5), font, 1, (255,255,255), 2)
+            cv2.putText(image, str(confidence), (x + 5, y + h-5), font, 1, (255,255,0), 1)
 
-    def _recognizeProfile(self, image, gray):
-        status = NO_FACE
-        nameId = ""
-        confidence = -1
-        faces = faceCascade2.detectMultiScale(
-            gray,
-            scaleFactor = 1.2,
-            minNeighbors = 5,
-            minSize = (int(self.minW), int(self.minH)),
-        )
-
-        xx = yy = ww = hh = -1
-        for (x, y, w, h) in faces:
-            xx = x
-            yy = y
-            ww = w
-            hh = h
-            id, _confidence = recognizer2.predict(gray[y:y+h,x:x+w])
-            confidence = _confidence
-            # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence <= 75):
-                nameId = self.names[id]
-                status = VALID_FACE
-                # confidence = "  {0}%".format(round(100 - confidence))
-            else:
-                nameId = "unknown"
-                status = INVALID_FACE
-                # confidence = "  {0}%".format(round(confidence))
-
-        return status, (xx, yy, ww, hh), nameId, confidence
+        ret, jpeg = cv2.imencode('.jpg', image)
+        return status, jpeg.tostring()
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):

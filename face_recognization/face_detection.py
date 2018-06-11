@@ -6,8 +6,7 @@ cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # set video width
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # set video height
 
-front_face_detector = cv2.CascadeClassifier('Cascades/lbpcascade_frontalface_improved.xml')
-profile_face_detector = cv2.CascadeClassifier('Cascades/haarcascade_profileface.xml')
+face_detector = cv2.CascadeClassifier('Cascades/haarcascade_frontalface_default.xml')
 
 # For each person, enter one numeric face id
 face_id = input('\n enter user id end press <return> ==>  ')
@@ -17,61 +16,46 @@ print("\n [INFO] Initializing face capture. Look the camera and wait ...")
 # Initialize individual sampling face count
 num_front_samples = 0
 num_profile_samples = 0
-MAX_FRONT_SAMPLES = 1000
-MAX_PROFILE_SAMPLES = 1000
+MAX_FRONT_SAMPLES = 100
 
 detected_frontfaces = []
 detected_profilefaces = []
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 while(True):
     ret, img = cam.read()
     img = cv2.flip(img, -1) # flip video image vertically
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-    if(num_front_samples < MAX_FRONT_SAMPLES):
-        front_faces = front_face_detector.detectMultiScale(gray, 1.3, 5)
+    front_faces = face_detector.detectMultiScale(gray, 1.3, 5)
 
-        for (x,y,w,h) in front_faces:
-            cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
-            detected_frontfaces.append(gray[y:y+h,x:x+w])
-            num_front_samples += 1
-    else:
-        if(num_front_samples == MAX_FRONT_SAMPLES):
-            print("finished front face sampleing")
-            num_front_samples = MAX_FRONT_SAMPLES + 1
+    for (x,y,w,h) in front_faces:
+        cv2.rectangle(img, (x,y), (x+w,y+h), (255,0,0), 2)
+        detected_frontfaces.append(gray[y:y+h,x:x+w])
+        num_front_samples += 1
 
-    if(num_profile_samples < MAX_PROFILE_SAMPLES):
-        profile_faces = profile_face_detector.detectMultiScale(gray, 1.3, 5)
-
-        for (x,y,w,h) in profile_faces:
-            cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
-            detected_profilefaces.append(gray[y:y+h,x:x+w])
-            num_profile_samples += 1
-    else:
-        if(num_profile_samples == MAX_PROFILE_SAMPLES):
-            print("finished profile face sampleing")
-            num_profile_samples = MAX_PROFILE_SAMPLES + 1
-
+    cv2.putText(img, str(num_front_samples), (0, 0), font, 1, (255,255,255), 2)
     cv2.imshow('image', img)
-    k = cv2.waitKey(10) & 0xff # Press 'ESC' for exiting video
+    
+    k = cv2.waitKey(1) & 0xff # Press 'ESC' for exiting video
     if k == 27:
         break
-    elif num_front_samples >= MAX_FRONT_SAMPLES and num_profile_samples >= MAX_PROFILE_SAMPLES:
+    elif num_front_samples >= MAX_FRONT_SAMPLES:
         break
 
 # Do a bit of cleanup
-print("\n [INFO] Collected {} front faces and {} profile faces. Cleanup stuff".format(MAX_FRONT_SAMPLES, MAX_PROFILE_SAMPLES))
+print("\n [INFO] Collected {} front faces. Cleanup stuff".format(MAX_FRONT_SAMPLES))
 cam.release()
 cv2.destroyAllWindows()
 
 print("\n [INFO] Save face data and exiting Program")
 
-count = 0
-for face in detected_frontfaces:
-    cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + "f.jpg", face)
-    count += 1
+savePath = 'dataset/{}'.format(face_id)
+if not os.path.exists(savePath):
+    os.makedirs(savePath)
+os.chdir(savePath)
 
 count = 0
-for face in detected_profilefaces:
-    cv2.imwrite("dataset/User." + str(face_id) + '.' + str(count) + "p.jpg", face)
+for face in detected_frontfaces:
+    cv2.imwrite('{}.jpg'.format(count), face)
     count += 1
