@@ -80,7 +80,7 @@ class Stream():
             id, confidence = recognizer1.predict(gray[y:y+h,x:x+w])
 
             # Check if confidence is less them 100 ==> "0" is perfect match
-            if (confidence <= 100):
+            if (confidence <= 100.0):
                 nameId = self.names[id]
                 status = VALID_FACE
                 cv2.rectangle(image, (x, y), (x + w, y + h), (255,0,0), 2)

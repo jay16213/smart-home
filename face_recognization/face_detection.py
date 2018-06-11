@@ -6,7 +6,7 @@ cam = cv2.VideoCapture(0)
 cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640) # set video width
 cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480) # set video height
 
-face_detector = cv2.CascadeClassifier('Cascades/haarcascade_frontalface_default.xml')
+face_detector = cv2.CascadeClassifier('Cascades/lbpcascade_frontalface.xml')
 
 # For each person, enter one numeric face id
 face_id = input('\n enter user id end press <return> ==>  ')
@@ -34,9 +34,9 @@ while(True):
         detected_frontfaces.append(gray[y:y+h,x:x+w])
         num_front_samples += 1
 
-    cv2.putText(img, str(num_front_samples), (0, 0), font, 1, (255,255,255), 2)
+    cv2.putText(img, str(MAX_FRONT_SAMPLES - num_front_samples), (5, 25), font, 1, (255,255,255), 2)
     cv2.imshow('image', img)
-    
+
     k = cv2.waitKey(1) & 0xff # Press 'ESC' for exiting video
     if k == 27:
         break

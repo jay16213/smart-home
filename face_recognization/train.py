@@ -41,12 +41,18 @@ def test(samples):
     total_confidence = 0
     right = 0
     total = len(samples)
+    arr_c = []
     for sample, _id in samples:
         id, confidence = front_recognizer.predict(sample)
         total_confidence += confidence
+        arr_c.append(confidence)
         right += (id == _id)
 
-    print("train: {}, {}".format(float(right) / total, float(total_confidence) / total))
+    mean = np.mean(arr_c)
+    std = np.std(arr_c, ddof=1)
+    thresh = mean + 3 * std
+    print("train: {}, {}, {}".format(float(right) / total, mean, std))
+    print("{}".format(thresh))
 
 print ("\n [INFO] Loading images and labels. It will take a few seconds. Wait ...")
 total_samples = getImagesAndLabels(dataPath)
