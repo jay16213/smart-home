@@ -23,7 +23,7 @@ module.exports = () => {
     transporter.sendMail(mailOptions, (err, res) => {
         if(err) throw err;
         timestamp = moment();
-        console.log(`${timestamp.format('YYYY-MM-DD HH:mm:ss')} send mail`);
+        console.log(`[${timestamp.format('YYYY-MM-DD HH:mm:ss')}] send mail`);
     });
 
     return timestamp;

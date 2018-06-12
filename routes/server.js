@@ -2,12 +2,11 @@ const sendMail = require('../utils/sendMail');
 const getIP = require('../utils/getip');
 const moment= require('moment');
 const request = require('request');
-const async = require('async');
 
 const VALID_FACE = 1;
 const NO_FACE = 0;
 const INVALID_FACE = -1;
-const PI_URL = 'http://192.168.137.240:8080'
+const PI_URL = 'http://192.168.137.240:8080';
 
 module.exports = (app) => {
     let invalidCnt = 0;
@@ -31,7 +30,7 @@ module.exports = (app) => {
         else if(result == INVALID_FACE)
             invalidCnt++;
 
-        if(invalidCnt >= 5) {
+        if(invalidCnt >= 10) {
             let time = moment();
             console.log(`[${time.format('YYYY-MM-DD HH:mm:ss')}] detect stranger`);
             recognize_status = INVALID_FACE;

@@ -2,6 +2,7 @@
 secret/*
 **/dataset*/
 .vagrant/*
+**/__pycache__/
 
 # Logs
 logs

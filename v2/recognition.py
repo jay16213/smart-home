@@ -8,6 +8,8 @@ from urllib.request import urlopen
 import requests
 import face_recognition
 from encoding import loadEncoding
+from threading import Thread
+from queue import Queue
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 server_url = "http://192.168.142.4:8080"
@@ -17,30 +19,63 @@ VALID_FACE = 1
 NO_FACE = 0
 INVALID_FACE = -1
 
+raw_frame_queue = Queue()
+finished_frame_queue = Queue()
+
 class Stream():
     def __init__(self):
         print("[INFO] Capture stream resource")
         self.cap = cv2.VideoCapture(PI_URL)
         print("[INFO] Loading known face encodings")
-        self.known_face_encodings, self.known_names = loadEncoding()
-        print("[INFO] Finished initialization")
+        self.known_face_encodings, self.known_names = loadEncoding('v2')
+
+        self._get_frame_thread = Thread(target=self.get_frame_in_thread)
+        self._get_frame_thread.daemon = True
+        self._recognize_thread = Thread(target=self.run_in_thread)
+        self._recognize_thread.daemon = True
+
+        print("[INFO] Finished initialization. Start streaming")
+        self._get_frame_thread.start()
+        self._recognize_thread.start()
 
     def release(self):
         self.cap.release()
+        self._get_frame_thread.join()
+        self._recognize_thread.join()
 
-    def recognize(self):
+    def run_in_thread(self):
+        while True:
+            frame = raw_frame_queue.get()
+            if frame is None:
+                break
+            status, frame = self.recognize_in_thread(frame)
+            # send recognization result to server
+            requests.post(server_url + '/face_recognize', json = {"result": status})
+
+            # if there are too many finished frames, clear all of them
+            if finished_frame_queue.qsize() > 10:
+                finished_frame_queue.queue.clear()
+
+            finished_frame_queue.put(frame)
+            raw_frame_queue.task_done()
+
+    def get_frame_in_thread(self):
+        while True:
+            # if there are too many unprocessed frames, clear all of them
+            if raw_frame_queue.qsize() > 10:
+                raw_frame_queue.queue.clear()
+
+            res, frame = self.cap.read()
+            raw_frame_queue.put(frame)
+
+    def recognize_in_thread(self, frame):
         status = NO_FACE
-        res, frame = self.cap.read()
         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
-
-        # covert frame from BGR(opencv use) to RGB(face_recognition use)
-        # rgb_small_frame = small_frame[:, :, ::-1]
 
         # Find all the faces and face encodings in the current frame of video
         face_locations = face_recognition.face_locations(small_frame)
         face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
-        # _status = NO_FACE
         for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
             top *= 4
             right *= 4
@@ -48,7 +83,15 @@ class Stream():
             left *= 4
 
             # See if the face is a match for the known face(s)
-            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+            # matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+
+            matches = []
+            for face_distance in face_distances:
+                if face_distance <= 0.525:
+                    matches.append(True)
+                else:
+                    matches.append(False)
 
             # If a match was found in known_face_encodings, just use the first one.
             if True in matches:
@@ -57,7 +100,7 @@ class Stream():
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
                 cv2.putText(frame, self.known_names[first_match_index], (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
             else:
-                if(status != VALID_FACE):
+                if status != VALID_FACE:
                     status = INVALID_FACE
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
                 cv2.putText(frame, 'Unknown', (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
@@ -76,7 +119,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while True:
-                    status, frame = stream.recognize()
+                    frame = finished_frame_queue.get()
 
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
@@ -84,9 +127,6 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(frame)
                     self.wfile.write(b'\r\n')
-
-                    # send recognization result to server
-                    requests.post(server_url + '/face_recognize', json = {"result": status})
 
             except Exception as e:
                 logging.warning(

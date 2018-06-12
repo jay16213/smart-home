@@ -13,7 +13,7 @@ const INVALID_FACE = -1;
 module.exports = (app) => {
     let invalidCnt = 0;
     let lastSendTime = 0;
-
+    let leaveCnt = 0;
     app.all('*', (req, res, next) => {
         res.header("Access-Control-Allow-Origin", "*");
         res.header("Access-Control-Allow-Headers", "X-Requested-With");
@@ -44,10 +44,19 @@ module.exports = (app) => {
     app.post('/face_recognize', (req, res) => {
         let status = req.body.result;
 
-        if(status == VALID_FACE)
+        if(status == NO_FACE)
+            leaveCnt++;
+        if(leaveCnt >= 350)
+            rpio.write(pin.LIGHT, rpio.LOW);
+
+        if(status == VALID_FACE) {
             rpio.write(pin.LIGHT, rpio.HIGH);
-        else if(status == INVALID_FACE)
+            leaveCnt = 0;
+        }
+        else if(status == INVALID_FACE) {
             buzzer();
+            leaveCnt = 0;
+        }
 
         res.end('success');
     });
