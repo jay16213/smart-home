@@ -16,7 +16,7 @@ module.exports = () => {
     let mailOptions = {
         to: `${secret.user}@gmail.com`,
         from: `SmartHome <${secret.user}>`,
-        subject: 'Your Home Has Danger',
+        subject: 'Your Home is in Danger',
         text: 'A stranger is in your house now!\n'
     }
 

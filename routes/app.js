@@ -40,4 +40,15 @@ module.exports = (app) => {
         buzzer();
         res.end('success');
     });
+
+    app.post('/face_recognize', (req, res) => {
+        let status = req.body.result;
+
+        if(status == VALID_FACE)
+            rpio.write(pin.LIGHT, rpio.HIGH);
+        else if(status == INVALID_FACE)
+            buzzer();
+
+        res.end('success');
+    });
 }

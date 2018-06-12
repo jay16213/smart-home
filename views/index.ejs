@@ -51,7 +51,7 @@
 
   $('#mailer').on('click', (e) => {
     $.ajax({
-      url: '<%= pi_url %>/warning',
+      url: 'http://<%= ip %>:8080/warning',
       type: 'POST',
       success: () => {
         console.log('send email request success');

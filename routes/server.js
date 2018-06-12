@@ -1,6 +1,8 @@
 const sendMail = require('../utils/sendMail');
 const getIP = require('../utils/getip');
 const moment= require('moment');
+const request = require('request');
+const async = require('async');
 
 const VALID_FACE = 1;
 const NO_FACE = 0;
@@ -17,19 +19,22 @@ module.exports = (app) => {
         res.render('index', {ip: ip, pi_url: PI_URL});
     });
 
-    app.post('/face_recognize', (req, res) => {
+    app.post('/face_recognize', (req, res, next) => {
         let result = req.body.result;
+        let recognize_status = NO_FACE;
 
-        if(result == VALID_FACE)
+        if(result == VALID_FACE) {
+            recognize_status = VALID_FACE;
             invalidCnt = 0;
+        }
 
-        if(result == INVALID_FACE)
+        else if(result == INVALID_FACE)
             invalidCnt++;
 
-        if(invalidCnt >= 5)
-        {
+        if(invalidCnt >= 5) {
             let time = moment();
             console.log(`[${time.format('YYYY-MM-DD HH:mm:ss')}] detect stranger`);
+            recognize_status = INVALID_FACE;
 
             // to prevent sending too many mails, send email every 30 minutes
             if(lastSendTime == 0 || time.diff(lastSendTime, 'seconds') >= 1800)
@@ -37,8 +42,15 @@ module.exports = (app) => {
 
             invalidCnt = 0;
         }
-
         res.end('success');
+
+        request.post(
+            `${PI_URL}/face_recognize`,
+            { json: {'result': recognize_status} },
+            (err, res, body) => {
+                if(err) console.log(err);
+            }
+        );
     });
 
     app.post('/warning', (req, res) => {

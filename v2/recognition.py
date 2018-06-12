@@ -5,11 +5,17 @@ import socketserver
 from http import server
 import numpy as np
 from urllib.request import urlopen
+import requests
 import face_recognition
 from encoding import loadEncoding
 
 font = cv2.FONT_HERSHEY_SIMPLEX
+server_url = "http://192.168.142.4:8080"
 PI_URL = "http://192.168.137.240:8161"
+
+VALID_FACE = 1
+NO_FACE = 0
+INVALID_FACE = -1
 
 class Stream():
     def __init__(self):
@@ -23,6 +29,7 @@ class Stream():
         self.cap.release()
 
     def recognize(self):
+        status = NO_FACE
         res, frame = self.cap.read()
         small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
 
@@ -33,7 +40,7 @@ class Stream():
         face_locations = face_recognition.face_locations(small_frame)
         face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
-        # predice_name = []
+        # _status = NO_FACE
         for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
             top *= 4
             right *= 4
@@ -45,16 +52,18 @@ class Stream():
 
             # If a match was found in known_face_encodings, just use the first one.
             if True in matches:
+                status = VALID_FACE
                 first_match_index = matches.index(True)
+                cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
                 cv2.putText(frame, self.known_names[first_match_index], (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-                # predice_name.append(self.known_names[first_match_index])
             else:
+                if(status != VALID_FACE):
+                    status = INVALID_FACE
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
                 cv2.putText(frame, 'Unknown', (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
-                # predice_name.append('Unknown')
 
         ret, jpeg = cv2.imencode('.jpg', frame)
-        return jpeg.tostring()
+        return status, jpeg.tostring()
 
 class StreamingHandler(server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -67,7 +76,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.end_headers()
             try:
                 while True:
-                    frame = stream.recognize()
+                    status, frame = stream.recognize()
 
                     self.wfile.write(b'--FRAME\r\n')
                     self.send_header('Content-Type', 'image/jpeg')
@@ -77,7 +86,7 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
                     self.wfile.write(b'\r\n')
 
                     # send recognization result to server
-                    # requests.post(server_url + '/face_recognize', json = {"result": result})
+                    requests.post(server_url + '/face_recognize', json = {"result": status})
 
             except Exception as e:
                 logging.warning(

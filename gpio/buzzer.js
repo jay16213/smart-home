@@ -4,7 +4,7 @@ const BUZZER_PIN = require('./pin').BUZZER;
 module.exports = () => {
     rpio.open(BUZZER_PIN, rpio.OUTPUT, rpio.LOW);
 
-    for(let i = 0; i < 10; i++)
+    for(let i = 0; i < 2; i++)
     {
         rpio.write(BUZZER_PIN, rpio.HIGH);
         rpio.msleep(250);
