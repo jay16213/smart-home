@@ -21,7 +21,7 @@
 <script>
   $('#temp').on('click', function(e) {
     $.ajax({
-      url: '/temp',
+      url: '<%= pi_url %>/temp',
       type: 'POST',
       success: () => {
         console.log('post /temp success');
@@ -31,7 +31,7 @@
 
   $('#open-light').on('click', function(e) {
     $.ajax({
-      url: '/open/light',
+      url: '<%= pi_url %>/open/light',
       type: 'POST',
       success: () => {
         console.log('post /open/light success');
@@ -41,7 +41,7 @@
 
   $('#close-light').on('click', function(e) {
     $.ajax({
-      url: '/close/light',
+      url: '<%= pi_url %>/close/light',
       type: 'POST',
       success: () => {
         console.log('post /close/light success');
@@ -51,7 +51,7 @@
 
   $('#mailer').on('click', (e) => {
     $.ajax({
-      url: '/warning',
+      url: '<%= pi_url %>/warning',
       type: 'POST',
       success: () => {
         console.log('send email request success');
@@ -61,7 +61,7 @@
 
   $('#buzzer').on('click', (e) => {
     $.ajax({
-      url: '/buzzer',
+      url: '<%= pi_url %>/buzzer',
       type: 'POST',
       success: () => {
         console.log('buzzer request success');

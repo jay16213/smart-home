@@ -1,7 +1,6 @@
 const irSensor = require('../gpio/ir');
 const readTemperature = require('../gpio/temp');
 const buzzer = require('../gpio/buzzer');
-const sendMail = require('../utils/sendMail');
 const getIP = require('../utils/getip');
 const moment= require('moment');
 const rpio = require('rpio');
@@ -15,12 +14,10 @@ module.exports = (app) => {
     let invalidCnt = 0;
     let lastSendTime = 0;
 
-    app.get('/', (req, res, next) => {
-        // read ir sensor every 500 ms
-        setInterval(irSensor, 500);
-        let ip = getIP();
-        console.log(`server ip: ${ip}`);
-        res.render('index', {ip: ip});
+    app.all('*', (req, res, next) => {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Headers", "X-Requested-With");
+        next();
     });
 
     app.post('/temp', (req, res) => {
@@ -41,38 +38,6 @@ module.exports = (app) => {
 
     app.post('/buzzer', (req, res) => {
         buzzer();
-        res.end('success');
-    });
-
-    app.post('/face_recognize', (req, res) => {
-        let result = req.body.result;
-
-        if(result == VALID_FACE)
-        {
-            rpio.write(pin.LIGHT, rpio.HIGH);
-            invalidCnt = 0;
-        }
-
-        if(result == INVALID_FACE)
-            invalidCnt++;
-
-        if(invalidCnt >= 5)
-        {
-            let time = moment();
-            console.log(`[${time.format('YYYY-MM-DD HH:mm:ss')}] detect stranger`);
-
-            // to prevent sending too many mails, send email every 30 minutes
-            if(lastSendTime == 0 || time.diff(lastSendTime, 'seconds') >= 1800)
-                lastSendTime = sendMail();
-
-            invalidCnt = 0;
-        }
-
-        res.end('success');
-    });
-
-    app.post('/warning', (req, res) => {
-        sendMail();
         res.end('success');
     });
 }

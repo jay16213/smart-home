@@ -7,60 +7,66 @@
 # https://gist.github.com/ageitgey/1ac8dbe8572f3f533df6269dab35df65
 
 import face_recognition
-import picamera
 import numpy as np
 import cv2
 from encoding import loadEncoding
 
 font = cv2.FONT_HERSHEY_DUPLEX
 
+print("Initialize camera (use OpenCV)")
 camera = cv2.VideoCapture(0)
 camera.set(cv2.CAP_PROP_FRAME_WIDTH, 320)
 camera.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)
 camera.set(cv2.CAP_PROP_FPS, 24)
-output = np.empty((240, 320, 3), dtype=np.uint8)
 
 # Load a sample picture and learn how to recognize it.
-print("Loading known face image(s)")
+print("Loading known face encodings")
 known_face_encodings, known_names = loadEncoding()
-# obama_image = face_recognition.load_image_file("jay.jpg")
-# obama_face_encoding = face_recognition.face_encodings(obama_image)[0]
 
 # Initialize some variables
 face_locations = []
 face_encodings = []
 
 while True:
-    # print("Capturing image.")
-    # Grab a single frame of video from the RPi camera as a numpy array
-    # camera.capture(output, format="rgb")
-    rval, output = camera.read()
-    output = cv2.flip(output, -1) # Flip vertically
+    rval, frame = camera.read()
+    frame = cv2.flip(frame, -1) # Flip vertically
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+
+    # covert frame from BGR(opencv use) to RGB(face_recognition use)
+    # rgb_small_frame = small_frame[:, :, ::-1]
 
     # Find all the faces and face encodings in the current frame of video
-    face_locations = face_recognition.face_locations(output)
-    # print("Found {} faces in image.".format(len(face_locations)))
-    face_encodings = face_recognition.face_encodings(output, face_locations)
+    face_locations = face_recognition.face_locations(small_frame)
+    face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
+    predice_name = []
     # Loop over each face found in the frame to see if it's someone we know.
-    name = []
     for face_encoding in face_encodings:
         # See if the face is a match for the known face(s)
         matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
         for idx in range(len(matches)):
             if matches[idx]:
-                name.append(known_names[idx])
+                predice_name.append(known_names[idx])
             else:
-                name.append("Unknown")
+                predice_name.append("Unknown")
 
+    # draw the result
     i = 0
     for (top, right, bottom, left) in face_locations:
-        cv2.rectangle(output, (left, top), (right, bottom), (0, 0, 255), 2)
-        cv2.putText(output, name[i], (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+        top *= 4
+        right *= 4
+        bottom *= 4
+        left *= 4
+        if(predice_name[i] == "Unknown"):
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+        else:
+            cv2.rectangle(frame, (left, top), (right, bottom), (0, 255, 0), 2)
+        cv2.putText(frame, predice_name[i], (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
         i += 1
 
-    cv2.imshow('Video', output)
+    cv2.imshow('Video', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+camera.release()
 cv2.destroyAllWindows()
