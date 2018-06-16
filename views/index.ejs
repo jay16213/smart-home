@@ -1,33 +1,65 @@
 <% layout('layout') %>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" href="/">SmartHome</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navbarNavDropdown">
+    <ul class="navbar-nav">
+      <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Test
+        </a>
+        <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+          <a class="dropdown-item" href="#" id="mailer">Send email</a>
+          <a class="dropdown-item" href="#" id="buzzer">beep</a>
+        </div>
+      </li>
+    </ul>
+  </div>
+</nav>
 
 <div class="container">
+
+  <div class="row">
+    <div class="col-10">
+      <h4 id="temp-show"></h4>
+    </div>
+  </div>
+
   <div class="row justify-content-center">
     <div class="col-10">
       <img src="http://<%= ip %>:8160" class="img-fluid mx-auto d-block" width="640" height="480"/>
     </div>
   </div>
 
+  <br>
+
   <div class="row justify-content-center">
-    <div class="col-10">
-      <button id="temp" class="btn btn-primary">temp</button>
-      <button id="open-light" class="btn btn-primary">open light</button>
-      <button id="close-light" class="btn btn-primary">close light</button>
-      <button id="mailer" class="btn btn-primary">send mail</button>
-      <button id="buzzer" class="btn btn-primary">beep</button>
+    <div class="col-6 d-flex justify-content-center">
+      <div class="btn-group" role="group" aria-label="Appliance control">
+          <button id="open-light" class="btn btn-info border-right">open light</button>
+          <button id="close-light" class="btn btn-info border-right">close light</button>
+          <button id="open-fan" class="btn btn-info border-right">open fan</button>
+          <button id="close-fan" class="btn btn-info">close fan</button>
+      </div>
     </div>
   </div>
+
+  <br>
 </div>
 
 <script>
-  $('#temp').on('click', function(e) {
-    $.ajax({
-      url: '<%= pi_url %>/temp',
-      type: 'POST',
-      success: () => {
-        console.log('post /temp success');
-      }
+  function updateTemp() {
+    $.getJSON('<%= pi_url %>/temp', () => {
+    }).done((data) => {
+      $('#temp-show').html(`現在溫度: ${data['temp']}`);
     });
-  });
+
+    // update temperature every 10 minutes
+    setInterval(updateTemp, 600000);
+  }
+  updateTemp(); // initial call
 
   $('#open-light').on('click', function(e) {
     $.ajax({
@@ -45,6 +77,26 @@
       type: 'POST',
       success: () => {
         console.log('post /close/light success');
+      }
+    });
+  });
+
+  $('#open-fan').on('click', function(e) {
+    $.ajax({
+      url: '<%= pi_url %>/open/fan',
+      type: 'POST',
+      success: () => {
+        console.log('post /open/fan success');
+      }
+    });
+  });
+
+  $('#close-fan').on('click', function(e) {
+    $.ajax({
+      url: '<%= pi_url %>/close/fan',
+      type: 'POST',
+      success: () => {
+        console.log('post /close/fan success');
       }
     });
   });

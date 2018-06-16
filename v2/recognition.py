@@ -12,8 +12,8 @@ from threading import Thread
 from queue import Queue
 
 font = cv2.FONT_HERSHEY_SIMPLEX
-server_url = "http://192.168.142.4:8080"
-PI_URL = "http://192.168.137.240:8161"
+server_url = "http://0.0.0.0:8080"
+PI_URL = "http://192.168.137.220:8161"
 
 VALID_FACE = 1
 NO_FACE = 0
@@ -83,15 +83,7 @@ class Stream():
             left *= 4
 
             # See if the face is a match for the known face(s)
-            # matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
-            face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
-
-            matches = []
-            for face_distance in face_distances:
-                if face_distance <= 0.525:
-                    matches.append(True)
-                else:
-                    matches.append(False)
+            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding, tolerance=0.525)
 
             # If a match was found in known_face_encodings, just use the first one.
             if True in matches:

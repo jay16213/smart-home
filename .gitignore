@@ -3,6 +3,7 @@ secret/*
 **/dataset*/
 .vagrant/*
 **/__pycache__/
+**/*.box
 
 # Logs
 logs

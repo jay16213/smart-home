@@ -26,8 +26,22 @@ module.exports = (app) => {
         res.end('success');
     });
 
+    app.get('/temp', (req, res) => {
+        res.end(JSON.stringify({temp: moment().format('ss')}));
+    });
+
     app.post('/open/light', (req, res) => {
         rpio.write(pin.LIGHT, rpio.HIGH);
+        res.end('success');
+    });
+
+    app.post('/open/fan', (req, res) => {
+        rpio.write(pin.FAN, rpio.HIGH);
+        res.end('success');
+    });
+
+    app.post('/close/fan', (req, res) => {
+        rpio.write(pin.FAN, rpio.LOW);
         res.end('success');
     });
 
@@ -46,11 +60,14 @@ module.exports = (app) => {
 
         if(status == NO_FACE)
             leaveCnt++;
-        if(leaveCnt >= 350)
+        if(leaveCnt >= 3500) {
             rpio.write(pin.LIGHT, rpio.LOW);
+            rpio.write(pin.FAN, rpio.LOW);
+        }
 
         if(status == VALID_FACE) {
             rpio.write(pin.LIGHT, rpio.HIGH);
+            rpio.write(pin.FAN, rpio.HIGH);
             leaveCnt = 0;
         }
         else if(status == INVALID_FACE) {

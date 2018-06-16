@@ -6,7 +6,7 @@ const request = require('request');
 const VALID_FACE = 1;
 const NO_FACE = 0;
 const INVALID_FACE = -1;
-const PI_URL = 'http://192.168.137.240:8080';
+const PI_URL = 'http://192.168.137.220:8080';
 
 module.exports = (app) => {
     let invalidCnt = 0;

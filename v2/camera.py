@@ -11,6 +11,10 @@ class Camera():
     def __init__(self):
         # open camera
         self.cam = cv2.VideoCapture(0)
+        if not self.cam.isOpened():
+            print("[ERROR] Could not open the camera")
+            exit(-1)
+
         self.cam.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cam.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cam.set(cv2.CAP_PROP_FPS, 25)

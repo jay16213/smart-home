@@ -8,9 +8,11 @@ def saveEncoding():
 
     print("Loading images and get encodings")
     img1 = face_recognition.load_image_file("jay.jpg")
-    all_face_encodings["jay"] = face_recognition.face_encodings(img1)[0]
+    all_face_encodings["jay"] = face_recognition.face_encodings(img1, num_jitters=100)[0]
     img2 = face_recognition.load_image_file("jay1.jpg")
-    all_face_encodings["jay1"] = face_recognition.face_encodings(img2)[0]
+    all_face_encodings["jay1"] = face_recognition.face_encodings(img2, num_jitters=100)[0]
+    img3 = face_recognition.load_image_file("jay2.jpg")
+    all_face_encodings["jay2"] = face_recognition.face_encodings(img3, num_jitters=100)[0]
 
     print("Saving encodings")
     with open('dataset_faces.dat', 'wb') as f:
