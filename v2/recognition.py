@@ -97,6 +97,9 @@ class Stream():
                 cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
                 cv2.putText(frame, 'Unknown', (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
 
+        if status == INVALID_FACE:
+            cv2.imwrite('v2/stranger/stranger.jpg', frame)
+
         ret, jpeg = cv2.imencode('.jpg', frame)
         return status, jpeg.tostring()
 

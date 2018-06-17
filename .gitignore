@@ -4,6 +4,7 @@ secret/*
 .vagrant/*
 **/__pycache__/
 **/*.box
+v2/stranger/*
 
 # Logs
 logs

@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const secret = require('../secret/mail');
-const moment= require('moment');
+const moment = require('moment');
+const getIP = require('./getip');
 
 module.exports = () => {
     let timestamp;
@@ -17,7 +18,12 @@ module.exports = () => {
         to: `${secret.user}@gmail.com`,
         from: `SmartHome <${secret.user}>`,
         subject: 'Your Home is in Danger',
-        text: 'A stranger is in your house now!\n'
+        text: `A stranger is in your house now!\n` +
+                `Goto http://${getIP()}:8080 to get more info.\n`,
+        attachments: [{
+            filename: 'stranger.jpg',
+            path: './v2/stranger/stranger.jpg'
+        }]
     }
 
     transporter.sendMail(mailOptions, (err, res) => {

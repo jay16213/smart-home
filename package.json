@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "python3 v2/camera.py & node app.js",
     "server": "python3 v2/recognition.py & node app-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
