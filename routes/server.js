@@ -30,7 +30,7 @@ module.exports = (app) => {
         else if(result == INVALID_FACE)
             invalidCnt++;
 
-        if(invalidCnt >= 10) {
+        if(invalidCnt >= 8) {
             let time = moment();
             console.log(`[${time.format('YYYY-MM-DD HH:mm:ss')}] detect stranger`);
             recognize_status = INVALID_FACE;

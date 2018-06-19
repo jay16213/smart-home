@@ -1,5 +1,7 @@
 const irSensor = require('../gpio/ir');
-const readTemperature = require('../gpio/temp');
+// const readTemperature = require('../gpio/temp');
+const tempSensor = require('node-dht-sensor');
+const DHT11_PGIO = require('../gpio/pin').DHT11;
 const buzzer = require('../gpio/buzzer');
 const getIP = require('../utils/getip');
 const moment= require('moment');
@@ -27,7 +29,11 @@ module.exports = (app) => {
     });
 
     app.get('/temp', (req, res) => {
-        res.end(JSON.stringify({temp: moment().format('ss')}));
+        tempSensor.read(11, DHT11_PGIO, (err, temperature, humidity) => {
+            if(!err) {
+                res.end(JSON.stringify({temp: temperature.toFixed(1)}));
+            }
+        });
     });
 
     app.post('/open/light', (req, res) => {
@@ -60,14 +66,23 @@ module.exports = (app) => {
 
         if(status == NO_FACE)
             leaveCnt++;
-        if(leaveCnt >= 3500) {
+        if(leaveCnt >= 300) {
             rpio.write(pin.LIGHT, rpio.LOW);
             rpio.write(pin.FAN, rpio.LOW);
+            leaveCnt = 0;
         }
 
         if(status == VALID_FACE) {
             rpio.write(pin.LIGHT, rpio.HIGH);
-            rpio.write(pin.FAN, rpio.HIGH);
+
+            tempSensor.read(11, DHT11_PGIO, (err, temperature, humidity) => {
+                if(!err) {
+                    let t = temperature.toFixed(1);
+                    if(t >= 28.0)
+                        rpio.write(pin.FAN, rpio.HIGH);
+                }
+            });
+
             leaveCnt = 0;
         }
         else if(status == INVALID_FACE) {
