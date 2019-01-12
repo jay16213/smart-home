@@ -10,6 +10,7 @@ const PI_URL = 'http://192.168.137.220:8080';
 
 module.exports = (app) => {
     let invalidCnt = 0;
+    let validCnt = 0;
     let lastSendTime = 0;
 
     app.get('/', (req, res, next) => {
@@ -23,12 +24,20 @@ module.exports = (app) => {
         let recognize_status = NO_FACE;
 
         if(result == VALID_FACE) {
-            recognize_status = VALID_FACE;
+            // recognize_status = VALID_FACE;
             invalidCnt = 0;
+            validCnt++;
+        }
+        else if(result == INVALID_FACE) {
+            invalidCnt++;
+            validCnt = 0;
         }
 
-        else if(result == INVALID_FACE)
-            invalidCnt++;
+        if(validCnt >= 8) {
+            recognize_status = VALID_FACE;
+            validCnt = 0;
+            invalidCnt = 0;
+        }
 
         if(invalidCnt >= 8) {
             let time = moment();
@@ -40,6 +49,7 @@ module.exports = (app) => {
                 lastSendTime = sendMail();
 
             invalidCnt = 0;
+            validCnt = 0;
         }
         res.end('success');
 
